@@ -1,0 +1,71 @@
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    command: tunnel --no-autoupdate run
+    networks:
+      - secure-net
+
+  traefik:
+    image: traefik:v3.5
+    container_name: traefik
+    restart: unless-stopped
+    command: >
+      --log.level=INFO
+      --entrypoints.web.address=:80
+      --entrypoints.web.forwardedHeaders.insecure=true
+      --providers.file.filename=/etc/traefik/traefik_dynamic.yml
+      --providers.file.watch=true
+    volumes:
+      - ./traefik_dynamic.yml:/etc/traefik/traefik_dynamic.yml:ro
+    ports:
+      - "80:80"
+    networks:
+      - secure-net
+
+  auth-postgres:
+    image: postgres:18-alpine
+    container_name: auth-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=authelia_admin
+      - POSTGRES_PASSWORD=tickelishtesticles
+      - POSTGRES_DB=authelia_db
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    networks:
+      - secure-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U authelia_admin -d authelia_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  authelia:
+    image: authelia/authelia:latest
+    container_name: authelia
+    restart: unless-stopped
+    volumes:
+      - ./authelia:/config
+    networks:
+      - secure-net
+    depends_on:
+      auth-postgres:
+        condition: service_healthy
+
+  hello-world-site:
+    image: nginxdemos/hello:plain-text
+    container_name: hello-world
+    restart: unless-stopped
+    networks:
+      - secure-net
+
+volumes:
+  postgres_data:
+
+networks:
+  secure-net:
+    name: secure-net

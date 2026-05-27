@@ -1,0 +1,46 @@
+http:
+  routers:
+    authelia-router:
+      rule: "Host(`auth.gusbus.co.za`)"
+      service: authelia-service
+      entryPoints:
+        - web
+      middlewares:
+        - secure-headers   # <--- Add this
+
+    hello-router:
+      rule: "Host(`gusbus.co.za`)"
+      service: hello-service
+      entryPoints:
+        - web
+      middlewares:
+        - secure-headers   # <--- Add this
+        - authelia-guard
+
+  services:
+    authelia-service:
+      loadBalancer:
+        servers:
+          - url: "http://authelia:9091"
+
+    hello-service:
+      loadBalancer:
+        servers:
+          - url: "http://hello-world:80"
+
+  middlewares:
+    # Forces Traefik to always declare the protocol downstream as secure HTTPS
+    secure-headers:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
+
+    authelia-guard:
+      forwardAuth:
+        address: "http://authelia:9091/api/authz/forward-auth?authelia_url=https%3A%2F%2Fauth.gusbus.co.za%2F"
+        trustForwardHeader: true
+        authResponseHeaders:
+          - "Remote-User"
+          - "Remote-Groups"
+          - "Remote-Name"
+          - "Remote-Email"
