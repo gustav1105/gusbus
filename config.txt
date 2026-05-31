@@ -1,0 +1,75 @@
+server:
+  address: 'tcp://0.0.0.0:9091/'
+
+log:
+  level: 'info'
+
+identity_validation:
+  reset_password:
+    jwt_secret: ${AUTHELIA_JWT_SECRET}
+
+default_redirection_url: 'https://gusbus.co.za/'
+
+authentication_backend:
+  file:
+    path: '/config/users_database.yml'
+    password:
+      algorithm: 'argon2'
+
+session:
+  name: 'authelia_session'
+  same_site: 'lax'
+  secret: ${AUTHELIA_SESSION_SECRET}
+  expiration: '1h'
+  inactivity: '5m'
+  cookies:
+    - domain: 'gusbus.co.za'
+      authelia_url: 'https://auth.gusbus.co.za'
+      default_redirection_url: 'https://gusbus.co.za/'
+
+storage:
+  encryption_key: ${STORAGE_ENCRYPTION_KEY}
+  postgres:
+    address: 'tcp://auth-postgres:5432'
+    database: 'authelia_db'
+    username: 'authelia_admin'
+    password: 'tickelishtesticles'
+    timeout: '5s'
+
+notifier:
+  filesystem:
+    filename: '/config/notification.txt'
+
+access_control:
+  default_policy: 'one_factor'
+  rules:
+    - domain: 'auth.gusbus.co.za'
+      policy: 'bypass'
+
+identity_providers:
+  oidc:
+    hmac_secret: ${AUTHELIA_HMAC_SECRET}
+    jwks:
+      - key_id: 'cloudflare-signing-key'
+        algorithm: 'RS256'
+        # Drop the literal private key text here completely clean
+        key: |
+          -----BEGIN RSA PRIVATE KEY-----
+          [PASTE_THE_ENTIRE_CONTENTS_OF_YOUR_JWKS_PRIVATE_PEM_FILE_HERE]
+          -----END RSA PRIVATE KEY-----
+
+    clients:
+      - client_id: 'cloudflare-access'
+        client_name: 'Cloudflare Zero Trust'
+        # For OpenID Connect clients in Authelia, plain secrets must be hashed.
+        # Run: docker run --rm authelia/authelia:latest authelia crypto hash generate pbkdf2 --password YOUR_SECRET_HERE
+        # Then paste that output hash string right below:
+        client_secret: '$pbkdf2$50000$...' 
+        public: false
+        authorization_policy: 'one_factor'
+        redirect_uris:
+          - 'https://green-fire-3db9.cloudflareaccess.com/cdn-cgi/access/callback'
+        scopes:
+          - 'openid'
+          - 'profile'
+          - 'email'

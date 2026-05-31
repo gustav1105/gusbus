@@ -56,7 +56,7 @@ services:
       auth-postgres:
         condition: service_healthy
 
-  hello-world-site:
+  hello-world:
     image: nginxdemos/hello:plain-text
     container_name: hello-world
     restart: unless-stopped

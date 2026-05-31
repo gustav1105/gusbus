@@ -5,8 +5,6 @@ http:
       service: authelia-service
       entryPoints:
         - web
-      middlewares:
-        - secure-headers   # <--- Add this
 
     hello-router:
       rule: "Host(`gusbus.co.za`)"
@@ -14,7 +12,6 @@ http:
       entryPoints:
         - web
       middlewares:
-        - secure-headers   # <--- Add this
         - authelia-guard
 
   services:
@@ -29,14 +26,9 @@ http:
           - url: "http://hello-world:80"
 
   middlewares:
-    # Forces Traefik to always declare the protocol downstream as secure HTTPS
-    secure-headers:
-      headers:
-        customRequestHeaders:
-          X-Forwarded-Proto: "https"
-
     authelia-guard:
       forwardAuth:
+        # We add the explicit target query parameter to tell Authelia where the root auth portal lives
         address: "http://authelia:9091/api/authz/forward-auth?authelia_url=https%3A%2F%2Fauth.gusbus.co.za%2F"
         trustForwardHeader: true
         authResponseHeaders:
