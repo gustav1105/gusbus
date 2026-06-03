@@ -6,15 +6,15 @@ http:
       entryPoints:
         - web
       middlewares:
-        - secure-headers   # <--- Add this
+        - secure-headers
 
-    hello-router:
-      rule: "Host(`gusbus.co.za`)"
+    admin-router:
+      rule: "Host(`admin.gusbus.co.za`)"
       service: hello-service
       entryPoints:
         - web
       middlewares:
-        - secure-headers   # <--- Add this
+        - secure-headers
         - authelia-guard
 
   services:
@@ -26,10 +26,9 @@ http:
     hello-service:
       loadBalancer:
         servers:
-          - url: "http://hello-world:80"
+          - url: "http://domain-router:8080"
 
   middlewares:
-    # Forces Traefik to always declare the protocol downstream as secure HTTPS
     secure-headers:
       headers:
         customRequestHeaders:
@@ -37,7 +36,8 @@ http:
 
     authelia-guard:
       forwardAuth:
-        address: "http://authelia:9091/api/authz/forward-auth?authelia_url=https%3A%2F%2Fauth.gusbus.co.za%2F"
+        # Ensure this is the correct endpoint for Authelia v4
+        address: "http://authelia:9091/api/authz/forward-auth"
         trustForwardHeader: true
         authResponseHeaders:
           - "Remote-User"

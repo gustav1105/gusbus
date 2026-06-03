@@ -1,0 +1,57 @@
+server:
+  address: '0.0.0.0:9091'
+  buffers:
+    read: 8192
+    write: 8192
+
+log:
+  level: 'debug'
+
+identity_validation:
+  reset_password:
+    jwt_secret: ${AUTHELIA_JWT_SECRET}
+
+authentication_backend:
+  file:
+    path: '/config/users_database.yml'
+    password:
+      algorithm: 'argon2'
+
+session:
+  name: 'authelia_session'
+  same_site: 'lax'
+  secret: ${AUTHELIA_SESSION_SECRET}
+  expiration: '1h'
+  inactivity: '5m'
+  cookies:
+    - domain: 'gusbus.co.za'
+      authelia_url: 'https://auth.gusbus.co.za'
+      default_redirection_url: 'https://admin.gusbus.co.za/'
+
+storage:
+  encryption_key: ${STORAGE_ENCRYPTION_KEY}
+  postgres:
+    address: 'tcp://auth-postgres:5432'
+    database: 'authelia_db'
+    username: 'authelia_admin'
+    password: 'tickelishtesticles'
+    timeout: '5s'
+
+notifier:
+  filesystem:
+    filename: '/config/notification.txt'
+
+access_control:
+  default_policy: 'one_factor'
+  rules:
+    - domain: 'auth.gusbus.co.za'
+      policy: 'bypass'
+    
+    - domain: 'admin.gusbus.co.za'
+      policy: 'one_factor'
+
+    - domain: 'gusbus.co.za'
+      resources:
+        - '^/pkg/.*'
+        - '^/location$'
+      policy: 'bypass'

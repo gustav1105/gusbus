@@ -56,12 +56,13 @@ services:
       auth-postgres:
         condition: service_healthy
 
-  hello-world-site:
-    image: nginxdemos/hello:plain-text
-    container_name: hello-world
+  domain-router:
+    build:
+      context: ./domain-router
+    container_name: domain-router
     restart: unless-stopped
     networks:
-      - secure-net
+     - secure-net
 
 volumes:
   postgres_data:

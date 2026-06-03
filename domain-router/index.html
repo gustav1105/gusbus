@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h1>My Celestial Location</h1>
+    <div id="location-display">Loading location...</div>
+    
+    <script type="module">
+      import init, { get_location } from './pkg/get_location_from_browser.js';
+      async function run() {
+        await init();
+        try {
+          get_location();
+        } catch (err) {
+          document.getElementById('location-display').innerText = "Error: " + err;
+        }
+      }
+      run();
+    </script>
+  </body>
+</html>
