@@ -36,7 +36,6 @@ http:
 
     authelia-guard:
       forwardAuth:
-        # Ensure this is the correct endpoint for Authelia v4
         address: "http://authelia:9091/api/authz/forward-auth"
         trustForwardHeader: true
         authResponseHeaders:
